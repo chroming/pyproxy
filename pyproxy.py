@@ -120,7 +120,7 @@ class ProxyHandler(tornado.web.RequestHandler):
         for keyword in ('Host', 'Content-Type', 'Content-Length'):
             if keyword in headers:
                 del headers[keyword]
-        if body.startswith('base64,'):
+        if body.startswith(b'base64,'):
             try:
                 body = b64decode(body[7:])
             except:
@@ -249,7 +249,7 @@ class ProxyHandler(tornado.web.RequestHandler):
             self._auto_finish = False
 
             stream = self.request.connection.detach()
-            req.header_callback = lambda line, stream=stream: not stream.closed() and stream.write(line) if not line.startswith('Transfer-Encoding') else None
+            req.header_callback = lambda line, stream=stream: not stream.closed() and stream.write(line.encode()) if not line.startswith('Transfer-Encoding') else None
             req.streaming_callback = lambda chunk, stream=stream: not stream.closed() and stream.write(chunk)
 
             client = tornado.httpclient.AsyncHTTPClient()
@@ -285,7 +285,7 @@ class ProxyHandler(tornado.web.RequestHandler):
 
         if kwargs.get('_callback'):
             self.set_header('Content-Type', 'application/javascript')
-            self.finish('%s(%s)' % (kwargs['_callback'], json.dumps(result.body)))
+            self.finish('%s(%s)' % (kwargs['_callback'], json.dumps(result.body.decode())))
         else:
             cors = self.get_argument('cors', None)
             if cors:
