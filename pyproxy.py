@@ -376,7 +376,10 @@ class ProxyHandler(tornado.web.RequestHandler):
                                                 tornado.tcpclient.TCPClient().connect(host, int(port)))
             except gen.TimeoutError:
                 raise HTTPError(504)
-            yield client.write(b'HTTP/1.0 200 Connection established\r\n\r\n')
+            try:
+                yield client.write(b'HTTP/1.0 200 Connection established\r\n\r\n')
+            except tornado.iostream.StreamClosedError:
+                pass
 
         link(client, remote)
         link(remote, client)
