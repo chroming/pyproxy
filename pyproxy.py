@@ -255,6 +255,8 @@ class ProxyHandler(tornado.web.RequestHandler):
             client = tornado.httpclient.AsyncHTTPClient()
             try:
                 result = yield client.fetch(req)
+            except socket.gaierror:
+                print("Requested hostname not found: %s" % req.url)
             except tornado.httpclient.HTTPError as e:
                 pass
             finally:
