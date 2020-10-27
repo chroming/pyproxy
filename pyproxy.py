@@ -120,7 +120,7 @@ class ProxyHandler(tornado.web.RequestHandler):
         for keyword in ('Host', 'Content-Type', 'Content-Length'):
             if keyword in headers:
                 del headers[keyword]
-        if body.startswith('base64,'):
+        if body.startswith(b'base64,'):
             try:
                 body = b64decode(body[7:])
             except:
