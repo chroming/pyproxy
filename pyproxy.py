@@ -155,6 +155,15 @@ class ProxyHandler(tornado.web.RequestHandler):
             ).hexdigest()[5:11],
             }
 
+    @staticmethod
+    def req_header_callback(line, stream):
+        if not line.startswith('Transfer-Encoding'):
+            return not stream.closed() and stream.write(line.encode())
+
+    @staticmethod
+    def req_stream_callback(chunk, stream):
+        return not stream.closed() and stream.write(chunk)
+
     @gen.coroutine
     def proxy(self, method, url, headers, body, **kwargs):
         if not self.auth(url):
@@ -249,8 +258,8 @@ class ProxyHandler(tornado.web.RequestHandler):
             self._auto_finish = False
 
             stream = self.request.connection.detach()
-            req.header_callback = lambda line, stream=stream: not stream.closed() and stream.write(line.encode()) if not line.startswith('Transfer-Encoding') else None
-            req.streaming_callback = lambda chunk, stream=stream: not stream.closed() and stream.write(chunk)
+            req.header_callback = lambda line: self.req_header_callback(line, stream)
+            req.streaming_callback = lambda chunk: self.req_stream_callback(chunk, stream)
 
             client = tornado.httpclient.AsyncHTTPClient()
             try:
@@ -444,7 +453,7 @@ def main(**kwargs):
     http_server.start()
 
     logging.info("http server started on %s:%s" % (options.bind, options.port))
-    IOLoop.instance().start()
+    IOLoop.current().start()
 
 if __name__ == "__main__":
     main()
